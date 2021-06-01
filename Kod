@@ -1,0 +1,178 @@
+
+// Manuel kontrol etmek için buton bağlantıları
+int tbutonPin = 9;
+int bbutonPin = 10;
+int ebutonPin = 11;
+int wbutonPin = 12;
+int switchPin = 13;
+int bluePin  = 3;
+
+int topbuton = 0;
+int botbuton = 0;
+int eastbuton = 0;
+int westbuton = 0;
+int onoffswitch = 0;
+int blueswitch = 0;
+
+
+// LDR bağlantıları
+// isim  = analogpin;
+int ldrlt = A0; //LDR top left
+int ldrrt = A1; //LDR top rigt
+int ldrld = A2; //LDR down left
+int ldrrd = A3; //LDR down rigt
+
+//dijital pinler
+
+const int NS1 = 2; // NS1 = Kuzey-Güney + Röle numarası + pin
+const int NS2 = 4; // NS2 = Kuzey-Güney + Röle numarası + pin
+const int EW3 = 7; // EW3 = Doğu-Batı + Röle Numarası + pin
+const int EW4 = 8; // EW4 = Doğu-Batı + Röle Numarası + pin
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(tbutonPin,INPUT_PULLUP);
+  pinMode(bbutonPin,INPUT_PULLUP);
+  pinMode(ebutonPin,INPUT_PULLUP);
+  pinMode(wbutonPin,INPUT_PULLUP);
+  pinMode(switchPin,INPUT_PULLUP);
+  pinMode(bluePin,  INPUT_PULLUP);
+  pinMode(NS1, OUTPUT); //N-S
+  pinMode(NS2, OUTPUT); //N-S
+  pinMode(EW3, OUTPUT); //E-W
+  pinMode(EW4, OUTPUT); //E-W
+}
+
+void loop() {
+
+   onoffswitch = digitalRead(switchPin);
+   while (onoffswitch == LOW &&blueswitch==LOW ){
+
+    ldrlt = analogRead(A0);
+    ldrrt = analogRead(A1);
+    ldrld = analogRead(A2);
+    ldrrd = analogRead(A3);
+
+    eastbuton = digitalRead(ebutonPin);
+                 if(eastbuton == HIGH)
+         {digitalWrite(EW3, HIGH);
+          digitalWrite(EW4, LOW);
+            } // sağ butona bastığınızda doğu tarafına doğru dönecektir
+             else {
+              digitalWrite(EW3, LOW);
+             }
+             westbuton = digitalRead(wbutonPin);
+             if(westbuton == HIGH)
+             {
+              digitalWrite(EW4,HIGH);
+             }// Sol butona bastığımızda batı tarafına dönecektir
+             else{
+              digitalWrite(EW4,LOW);
+             }
+             topbuton = digitalRead(tbutonPin);
+              if(topbuton==HIGH)
+               {
+             digitalWrite(NS1,HIGH);
+              }// Yukarı butona bastığımızda kuzey tarafına doğru dönecektir
+              else{
+                digitalWrite(NS1,LOW);
+               }
+
+               botbuton = digitalRead(bbutonPin);
+                        if(botbuton==HIGH)
+                        {
+                          digitalWrite(NS2,HIGH);
+                        }// Aşşağı butona bastığımızda güney tarafına doğru dönecektir
+                        else{
+                          digitalWrite(NS2,LOW);
+                        }
+             
+        }
+     while(onoffswitch==HIGH && blueswitch==LOW){
+      
+     
+  int lt = analogRead(ldrlt); // yukarı sol
+  int rt = analogRead(ldrrt); // yukarı sağ
+  int ld = analogRead(ldrld); // aşşağı sol
+  int rd = analogRead(ldrrd); // aşşağı sağ
+
+  const int tol = 200; // LDRleri okurken aradaki tölerans
+
+  int avt = (lt + rt) / 2; // ortalama üst deper
+  int avd = (ld + rd) / 2; // ortalama aşşağı değer
+  int avl = (lt + ld) / 2; // ortalama sol değer
+  int avr = (rt + rd) / 2; // ortalama sağ değer
+
+  int dvert = avt - avd; // yukarı ve aşşağı arasındaki farkı kontrol et
+  int dhoriz = avl - avr;// sol ve sağ arasındaki farkı kontrol et
+
+  if (-tol > dvert || dvert > tol) { // farkın töleransta olup olmadığı kontrol et , aksi takdirde dikey açıyı değiştir
+    // dikeydeki fark,harekete geçmek için yeterince yüksek
+    if (avt > avd) {
+      // Üstteki ortalama direnç,alttakinden büyük
+      digitalWrite(NS1, LOW);
+      digitalWrite(NS2, HIGH);
+    }
+    else {
+      // alttaki ortalama direnç, üsttekinden yüksek
+      digitalWrite(NS2, LOW);
+      digitalWrite(NS1, HIGH);
+    }
+  }
+  else {
+    // dikeydeki fark töleransın altında
+    digitalWrite(NS1, LOW);
+    digitalWrite(NS2, LOW);
+  }
+
+  if (-tol > dhoriz || dhoriz > tol) {
+    // yataydaki  fark,harekete geçmek için yeterince yüksek
+    if (avl > avr) {
+      // soldaki ortalama direnç sağdakinden yüksek
+      digitalWrite(EW3, LOW);
+      digitalWrite(EW4, HIGH);
+    }
+    else {
+      // sağdaki ortalama direnç soldakinden yüksek
+      digitalWrite(EW4, LOW);
+      digitalWrite(EW3, HIGH);
+    }
+  }
+  else {
+    // yataydaki fark toleransın altında
+    digitalWrite(EW3, LOW);
+    digitalWrite(EW4, LOW);
+  }
+
+
+  delay(1000);
+  }
+
+   while ( onoffswitch== LOW && blueswitch ==HIGH){
+
+    if (Serial.available())
+    {
+      char data = Serial.read();
+      Serial.println(data);
+
+     if(data=='1')
+     {
+      digitalWrite(NS1,HIGH);
+     }
+      else if (data=='2')
+      {
+        digitalWrite(NS2,HIGH);
+      }
+      else if (data=='3'){
+
+       digitalWrite(EW3,HIGH);
+      }
+
+     else if (data=='4'){
+      digitalWrite(EW4,HIGH);
+     }
+
+    }
+   }
+  
+}
